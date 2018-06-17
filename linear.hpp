@@ -57,9 +57,9 @@ struct parameter : public C::parameter {
 struct feature_nodes : public std::vector<C::feature_node> {
   void add_feature(int index, double value) { push_back({index, value}); }
 
-  void end_entry(double bias) {
-    if (bias >= 0) {
-      push_back({-1, bias});
+  void end_entry(const C::model& model) {
+    if (model.bias >= 0) {
+      push_back({model.nr_feature + 1, model.bias});
     }
     push_back({-1, 0});
   }
@@ -78,14 +78,18 @@ struct problem : public C::problem {
   }
 
   void add_feature(int index, double value) {
-    feature_nodes_.add_feature(index, value);
+    feature_nodes_.push_back({index, value});
     if (index > max_index_) {
       max_index_ = index;
     }
   }
 
   void end_entry() {
-    feature_nodes_.end_entry(bias);
+    if (bias >= 0) {
+      feature_nodes_.push_back({-1, bias}); // `index` will be set in `finish()`
+    }
+    feature_nodes_.push_back({-1, 0});
+
     x_space_.emplace_back(std::move(feature_nodes_));
     xv_.push_back(x_space_.back().data());
   }
@@ -97,8 +101,8 @@ struct problem : public C::problem {
       auto bias_index = max_index_ + 1;
       n = bias_index;
       for (auto line_index = 0; line_index < l; line_index++) {
-        auto &vec = x_space_[line_index];
-        vec[vec.size() - 2].index = bias_index;
+        auto &feature_nodes = x_space_[line_index];
+        feature_nodes[feature_nodes.size() - 2].index = bias_index;
       }
     } else {
       n = max_index_;
@@ -109,8 +113,8 @@ struct problem : public C::problem {
   int max_index_;
   std::vector<double> yv_;
   std::vector<C::feature_node *> xv_;
-  std::vector<feature_nodes> x_space_;
-  feature_nodes feature_nodes_;
+  std::vector<std::vector<C::feature_node>> x_space_;
+  std::vector<C::feature_node> feature_nodes_;
 };
 
 struct model {
