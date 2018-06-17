@@ -1,0 +1,12 @@
+[submodule "test/vendor/Catch2"]
+	path = test/vendor/Catch2
+	url = https://github.com/catchorg/Catch2.git
+[submodule "test/vendor/liblinear"]
+	path = test/vendor/liblinear
+	url = https://github.com/cjlin1/liblinear.git
+[submodule "test/vendor/cpp-peglib"]
+	path = test/vendor/cpp-peglib
+	url = https://github.com/yhirose/cpp-peglib.git
+[submodule "test/vendor/cpp-mmaplib"]
+	path = test/vendor/cpp-mmaplib
+	url = https://github.com/yhirose/cpp-mmaplib.git
