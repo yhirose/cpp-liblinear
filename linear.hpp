@@ -14,7 +14,9 @@
 
 namespace linear {
 
+namespace C {
 #include <linear.h>
+}  // namespace C
 
 namespace detail {
 
@@ -32,10 +34,10 @@ inline void write(std::ostream &os, T data) {
 
 }  // namespace detail
 
-struct parameter_s : public parameter {
-  parameter_s() {
+struct parameter : public C::parameter {
+  parameter() {
     // default values
-    solver_type = L2R_L2LOSS_SVC_DUAL;
+    solver_type = C::L2R_L2LOSS_SVC_DUAL;
     C = 1;
     eps = 0.1;
     p = 0.1;
@@ -45,14 +47,14 @@ struct parameter_s : public parameter {
     init_sol = nullptr;
   }
 
-  ~parameter_s() { destroy_param(this); }
+  ~parameter() { destroy_param(this); }
 
-  const char *check_parameter(const problem &prob) const {
-    return ::linear::check_parameter(&prob, this);
+  const char *check_parameter(const C::problem &prob) const {
+    return C::check_parameter(&prob, this);
   }
 };
 
-struct feature_nodes_s : public std::vector<feature_node> {
+struct feature_nodes : public std::vector<C::feature_node> {
   void add_feature(int index, double value) { push_back({index, value}); }
 
   void end_entry(double bias) {
@@ -63,8 +65,8 @@ struct feature_nodes_s : public std::vector<feature_node> {
   }
 };
 
-struct problem_s : public problem {
-  problem_s() : max_index_(0) {
+struct problem : public C::problem {
+  problem() : max_index_(0) {
     l = 0;
     n = 0;
     bias = -1;
@@ -106,38 +108,38 @@ struct problem_s : public problem {
  private:
   int max_index_;
   std::vector<double> yv_;
-  std::vector<feature_node *> xv_;
-  std::vector<feature_nodes_s> x_space_;
-  feature_nodes_s feature_nodes_;
+  std::vector<C::feature_node *> xv_;
+  std::vector<feature_nodes> x_space_;
+  feature_nodes feature_nodes_;
 };
 
-struct model_s {
-  model_s() : model_(nullptr) {}
+struct model {
+  model() : model_(nullptr) {}
 
-  ~model_s() { free_and_destroy_model(&model_); }
+  ~model() { free_and_destroy_model(&model_); }
 
   operator bool() { return model_ != nullptr; }
 
-  const model &data() const {
+  const C::model &data() const {
     assert(model_ != nullptr);
     return *model_;
   }
 
-  bool train(const problem_s &prob, const parameter_s &param) {
-    model_ = ::linear::train(&prob, &param);
+  bool train(const C::problem &prob, const C::parameter &param) {
+    model_ = C::train(&prob, &param);
     return model_ != nullptr;
   }
 
   bool save_model(const char *model_file_name) const {
     assert(model_ != nullptr);
-    if (!::linear::save_model(model_file_name, model_)) {
+    if (!C::save_model(model_file_name, model_)) {
       return true;
     }
     return false;
   }
 
   bool load_model(const char *model_file_name) {
-    model_ = ::linear::load_model(model_file_name);
+    model_ = C::load_model(model_file_name);
     return model_ != nullptr;
   }
 
@@ -160,7 +162,7 @@ struct model_s {
 
     auto w_size = (m.bias >= 0) ? m.nr_feature + 1 : m.nr_feature;
     auto nr_w =
-        (m.nr_class == 2 && m.param.solver_type != MCSVM_CS) ? 1 : m.nr_class;
+        (m.nr_class == 2 && m.param.solver_type != C::MCSVM_CS) ? 1 : m.nr_class;
     for (auto i = 0; i < w_size; i++) {
       for (auto j = 0; j < nr_w; j++) {
         write<double>(os, m.w[i * nr_w + j]);
@@ -173,7 +175,7 @@ struct model_s {
   bool load_model_binary(std::istream &is) {
     using namespace detail;
 
-    auto m = (model *)malloc(sizeof(model));
+    auto m = (C::model *)malloc(sizeof(C::model));
 
     m->param.solver_type = read<uint32_t>(is);
     m->nr_class = read<uint32_t>(is);
@@ -186,7 +188,7 @@ struct model_s {
     m->bias = read<double>(is);
 
     auto w_size = (m->bias >= 0) ? m->nr_feature + 1 : m->nr_feature;
-    auto nr_w = (m->nr_class == 2 && m->param.solver_type != MCSVM_CS)
+    auto nr_w = (m->nr_class == 2 && m->param.solver_type != C::MCSVM_CS)
                     ? 1
                     : m->nr_class;
     m->w = (double *)malloc(sizeof(double) * w_size * nr_w);
@@ -202,25 +204,24 @@ struct model_s {
     return model_ != nullptr;
   }
 
-  double predict(const feature_nodes_s &x) const {
+  double predict(const C::feature_node *x) const {
     std::vector<double> dummy(model_->nr_class, 0.0);
-    return ::linear::predict_values(model_, x.data(), dummy.data());
+    return C::predict_values(model_, x, dummy.data());
   }
 
-  double predict_probability(const feature_nodes_s &x,
+  double predict_probability(const C::feature_node *x,
                              std::vector<double> &prob_estimates) const {
     prob_estimates.resize(model_->nr_class);
-    return ::linear::predict_probability(model_, x.data(),
-                                         prob_estimates.data());
+    return C::predict_probability(model_, x, prob_estimates.data());
   }
 
-  int get_nr_feature() const { return ::linear::get_nr_feature(model_); }
+  int get_nr_feature() const { return C::get_nr_feature(model_); }
 
   void get_labels(std::vector<int> &labels) const {
     assert(model_ != nullptr);
-    auto nr_class = ::linear::get_nr_class(model_);
+    auto nr_class = C::get_nr_class(model_);
     labels.resize(nr_class);
-    ::linear::get_labels(model_, labels.data());
+    C::get_labels(model_, labels.data());
   }
 
   int find_label_index(int label) const {
@@ -235,18 +236,25 @@ struct model_s {
   }
 
  private:
-  model *model_;
+  C::model *model_;
 };
 
-inline double cross_validation_accuracy(const problem_s &prob,
-                                        const parameter_s &param,
+inline double find_parameter_C(const C::problem &prob, const C::parameter &param,
+                               int nr_fold = 5, double start_C = -1.0) {
+  double best_C, best_rate;
+  C::find_parameter_C(&prob, &param, nr_fold, start_C, 1024, &best_C, &best_rate);
+  return best_C;
+}
+
+inline double cross_validation_accuracy(const C::problem &prob,
+                                        const C::parameter &param,
                                         int nr_fold = 5) {
   std::vector<double> target(prob.l, 0.0);
-  ::linear::cross_validation(&prob, &param, nr_fold, target.data());
+  C::cross_validation(&prob, &param, nr_fold, target.data());
 
-  if (param.solver_type == L2R_L2LOSS_SVR ||
-      param.solver_type == L2R_L1LOSS_SVR_DUAL ||
-      param.solver_type == L2R_L2LOSS_SVR_DUAL) {
+  if (param.solver_type == C::L2R_L2LOSS_SVR ||
+      param.solver_type == C::L2R_L1LOSS_SVR_DUAL ||
+      param.solver_type == C::L2R_L2LOSS_SVR_DUAL) {
     // skip regression_model...
   } else {
     int total_correct = 0;
