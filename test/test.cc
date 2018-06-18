@@ -14,10 +14,12 @@ bool parse_data(const char* path, Callback callback) {
       ROOT      <-  LINE (nl LINE)* nl?
       LINE      <-  LABEL FEATURES
       FEATURES  <-  FEATURE+
+
       FEATURE   <-  INDEX ':' VALUE _
-      LABEL     <-  < double > _
-      INDEX     <-  < integer > _
-      VALUE     <-  < double > _
+      LABEL     <-  double _
+      INDEX     <-  integer _
+      VALUE     <-  double _
+
       integer   <-  [0-9]+
       double    <-  [-+]? [0-9]+ ('.' [0-9]+ ('e-' [0-9]+)?)?
       ~nl       <-  [\r\n]+
@@ -38,9 +40,8 @@ bool parse_data(const char* path, Callback callback) {
     return make_tuple(sv[0].get<int>(), sv[1].get<double>());
   };
 
-  p["LABEL"] = [](const SemanticValues& sv) { return stod(sv.token()); };
-  p["INDEX"] = [](const SemanticValues& sv) { return stoi(sv.token()); };
-  p["VALUE"] = [](const SemanticValues& sv) { return stod(sv.token()); };
+  p["integer"] = [](const SemanticValues& sv) { return stoi(sv.token()); };
+  p["double"] = [](const SemanticValues& sv) { return stod(sv.token()); };
 
   mmaplib::MemoryMappedFile mmap(path);
   return p.parse_n(mmap.data(), mmap.size());
