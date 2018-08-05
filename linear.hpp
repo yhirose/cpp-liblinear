@@ -129,6 +129,7 @@ struct model {
     if (C::check_parameter(&prob, &param) != NULL) {
       return false;
     }
+    C::set_print_string_function(&print_null);
     model_ = C::train(&prob, &param);
     return model_ != nullptr;
   }
@@ -239,6 +240,7 @@ struct model {
   }
 
  private:
+  inline static void print_null(const char *s) {}
   C::model *model_;
 };
 
