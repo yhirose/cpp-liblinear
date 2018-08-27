@@ -16,23 +16,21 @@ namespace linear {
 
 namespace C {
 #include <linear.h>
-}  // namespace C
+} // namespace C
 
 namespace detail {
 
-template <typename T>
-inline T read(std::istream &is) {
+template <typename T> inline T read(std::istream &is) {
   T data;
   is.read((char *)&data, sizeof(data));
   return data;
 }
 
-template <typename T>
-inline void write(std::ostream &os, T data) {
+template <typename T> inline void write(std::ostream &os, T data) {
   os.write((const char *)&data, sizeof(data));
 }
 
-}  // namespace detail
+} // namespace detail
 
 struct parameter : public C::parameter {
   parameter() {
@@ -53,10 +51,8 @@ struct parameter : public C::parameter {
 struct feature_nodes : public std::vector<C::feature_node> {
   void add_feature(int index, double value) { push_back({index, value}); }
 
-  void end_entry(const C::model& model) {
-    if (model.bias >= 0) {
-      push_back({model.nr_feature + 1, model.bias});
-    }
+  void end_entry(const C::model &model) {
+    if (model.bias >= 0) { push_back({model.nr_feature + 1, model.bias}); }
     push_back({-1, 0});
   }
 };
@@ -75,9 +71,7 @@ struct problem : public C::problem {
 
   void add_feature(int index, double value) {
     feature_nodes_.push_back({index, value});
-    if (index > max_index_) {
-      max_index_ = index;
-    }
+    if (index > max_index_) { max_index_ = index; }
   }
 
   void end_entry() {
@@ -105,7 +99,7 @@ struct problem : public C::problem {
     }
   }
 
- private:
+private:
   int max_index_;
   std::vector<double> yv_;
   std::vector<C::feature_node *> xv_;
@@ -125,10 +119,13 @@ struct model {
     return *model_;
   }
 
+  C::model &data() {
+    assert(model_ != nullptr);
+    return *model_;
+  }
+
   bool train(const C::problem &prob, const C::parameter &param) {
-    if (C::check_parameter(&prob, &param) != NULL) {
-      return false;
-    }
+    if (C::check_parameter(&prob, &param) != NULL) { return false; }
     C::set_print_string_function(&print_null);
     model_ = C::train(&prob, &param);
     return model_ != nullptr;
@@ -136,9 +133,7 @@ struct model {
 
   bool save_model(const char *model_file_name) const {
     assert(model_ != nullptr);
-    if (!C::save_model(model_file_name, model_)) {
-      return true;
-    }
+    if (!C::save_model(model_file_name, model_)) { return true; }
     return false;
   }
 
@@ -165,8 +160,9 @@ struct model {
     write<double>(os, m.bias);
 
     auto w_size = (m.bias >= 0) ? m.nr_feature + 1 : m.nr_feature;
-    auto nr_w =
-        (m.nr_class == 2 && m.param.solver_type != C::MCSVM_CS) ? 1 : m.nr_class;
+    auto nr_w = (m.nr_class == 2 && m.param.solver_type != C::MCSVM_CS)
+                    ? 1
+                    : m.nr_class;
     for (auto i = 0; i < w_size; i++) {
       for (auto j = 0; j < nr_w; j++) {
         write<double>(os, m.w[i * nr_w + j]);
@@ -221,6 +217,12 @@ struct model {
 
   int get_nr_feature() const { return C::get_nr_feature(model_); }
 
+  int get_nr_class() const { return C::get_nr_class(model_); }
+
+  const C::parameter &get_param() const { return model_->param; }
+
+  double get_bias() const { return model_->bias; }
+
   void get_labels(std::vector<int> &labels) const {
     assert(model_ != nullptr);
     auto nr_class = C::get_nr_class(model_);
@@ -231,36 +233,32 @@ struct model {
   int find_label_index(int label) const {
     if (model_->label != NULL) {
       for (int i = 0; i < model_->nr_class; i++) {
-        if (model_->label[i] == label) {
-          return i;
-        }
+        if (model_->label[i] == label) { return i; }
       }
     }
     return -1;
   }
 
- private:
+private:
   inline static void print_null(const char *s) {}
   C::model *model_;
 };
 
-inline double find_parameter_C(const C::problem &prob, const C::parameter &param,
-                               int nr_fold = 5, double start_C = -1.0) {
-  if (C::check_parameter(&prob, &param) != NULL) {
-    return -1.0;
-  }
+inline double find_parameter_C(const C::problem &prob,
+                               const C::parameter &param, int nr_fold = 5,
+                               double start_C = -1.0) {
+  if (C::check_parameter(&prob, &param) != NULL) { return -1.0; }
 
   double best_C, best_rate;
-  C::find_parameter_C(&prob, &param, nr_fold, start_C, 1024, &best_C, &best_rate);
+  C::find_parameter_C(&prob, &param, nr_fold, start_C, 1024, &best_C,
+                      &best_rate);
   return best_C;
 }
 
 inline double cross_validation_accuracy(const C::problem &prob,
                                         const C::parameter &param,
                                         int nr_fold = 5) {
-  if (C::check_parameter(&prob, &param) != NULL) {
-    return -1.0;
-  }
+  if (C::check_parameter(&prob, &param) != NULL) { return -1.0; }
 
   std::vector<double> target(prob.l, 0.0);
   C::cross_validation(&prob, &param, nr_fold, target.data());
@@ -272,9 +270,7 @@ inline double cross_validation_accuracy(const C::problem &prob,
   } else {
     int total_correct = 0;
     for (int i = 0; i < prob.l; i++) {
-      if (target[i] == prob.y[i]) {
-        ++total_correct;
-      }
+      if (target[i] == prob.y[i]) { ++total_correct; }
     }
     return 100.0 * total_correct / prob.l;
   }
@@ -282,6 +278,6 @@ inline double cross_validation_accuracy(const C::problem &prob,
   return -1.0;
 }
 
-}  // namespace linear
+} // namespace linear
 
-#endif  // _LINEAR_S_HPP
+#endif // _LINEAR_S_HPP
