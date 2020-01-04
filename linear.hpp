@@ -244,40 +244,6 @@ private:
   C::model *model_;
 };
 
-inline double find_parameter_C(const C::problem &prob,
-                               const C::parameter &param, int nr_fold = 5,
-                               double start_C = -1.0) {
-  if (C::check_parameter(&prob, &param) != NULL) { return -1.0; }
-
-  double best_C, best_rate;
-  C::find_parameter_C(&prob, &param, nr_fold, start_C, 1024, &best_C,
-                      &best_rate);
-  return best_C;
-}
-
-inline double cross_validation_accuracy(const C::problem &prob,
-                                        const C::parameter &param,
-                                        int nr_fold = 5) {
-  if (C::check_parameter(&prob, &param) != NULL) { return -1.0; }
-
-  std::vector<double> target(prob.l, 0.0);
-  C::cross_validation(&prob, &param, nr_fold, target.data());
-
-  if (param.solver_type == C::L2R_L2LOSS_SVR ||
-      param.solver_type == C::L2R_L1LOSS_SVR_DUAL ||
-      param.solver_type == C::L2R_L2LOSS_SVR_DUAL) {
-    // skip regression_model...
-  } else {
-    int total_correct = 0;
-    for (int i = 0; i < prob.l; i++) {
-      if (target[i] == prob.y[i]) { ++total_correct; }
-    }
-    return 100.0 * total_correct / prob.l;
-  }
-
-  return -1.0;
-}
-
 } // namespace linear
 
 #endif // _LINEAR_S_HPP

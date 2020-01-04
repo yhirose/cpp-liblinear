@@ -1,12 +1,39 @@
 #define CATCH_CONFIG_MAIN
-#include <catch.hpp>
-
 #include <mmaplib.h>
 #include <peglib.h>
+
+#include <catch.hpp>
 #include <linear.hpp>
 
 using namespace peg;
 using namespace std;
+using namespace linear;
+
+double cross_validation_accuracy(const C::problem& prob,
+                                 const C::parameter& param, int nr_fold = 5) {
+  if (C::check_parameter(&prob, &param) != NULL) {
+    return -1.0;
+  }
+
+  std::vector<double> target(prob.l, 0.0);
+  C::cross_validation(&prob, &param, nr_fold, target.data());
+
+  if (param.solver_type == C::L2R_L2LOSS_SVR ||
+      param.solver_type == C::L2R_L1LOSS_SVR_DUAL ||
+      param.solver_type == C::L2R_L2LOSS_SVR_DUAL) {
+    // skip regression_model...
+  } else {
+    int total_correct = 0;
+    for (int i = 0; i < prob.l; i++) {
+      if (target[i] == prob.y[i]) {
+        ++total_correct;
+      }
+    }
+    return 100.0 * total_correct / prob.l;
+  }
+
+  return -1.0;
+}
 
 template <typename Callback>
 bool parse_data(const char* path, Callback callback) {
@@ -27,8 +54,8 @@ bool parse_data(const char* path, Callback callback) {
     )");
 
   p["LINE"] = [&](const SemanticValues& sv) {
-    auto label = sv[0].get<double>();
-    auto& features = sv[1].get<vector<tuple<int, double>>>();
+    auto label = any_cast<double>(sv[0]);
+    const auto& features = any_cast<vector<tuple<int, double>>>(sv[1]);
     callback(label, features);
   };
 
@@ -37,7 +64,7 @@ bool parse_data(const char* path, Callback callback) {
   };
 
   p["FEATURE"] = [](const SemanticValues& sv) {
-    return make_tuple(sv[0].get<int>(), sv[1].get<double>());
+    return make_tuple(any_cast<int>(sv[0]), any_cast<double>(sv[1]));
   };
 
   p["integer"] = [](const SemanticValues& sv) { return stoi(sv.token()); };
@@ -88,15 +115,7 @@ double get_accuracy(const linear::model& model, const char* data_path) {
 }
 
 TEST_CASE("'heart' dataset test", "[heart]") {
-  const auto data_path = "./data/heart.scale";
-
-  SECTION("find_parameter_C test") {
-    linear::problem prob;
-    prepare_problem(data_path, prob);
-    linear::parameter param;
-    auto best_C = linear::find_parameter_C(prob, param);
-    CHECK(best_C == 1.0);
-  }
+  const auto data_path = "../data/heart.scale";
 
   linear::problem prob;
   REQUIRE(prepare_problem(data_path, prob));
@@ -118,7 +137,7 @@ TEST_CASE("'heart' dataset test", "[heart]") {
 }
 
 TEST_CASE("'iris' dataset test", "[iris]") {
-  const auto data_path = "./data/iris.scale";
+  const auto data_path = "../data/iris.scale";
 
   linear::problem prob;
   prob.bias = 0.9;
