@@ -37,12 +37,14 @@ struct parameter : public C::parameter {
     // default values
     solver_type = C::L2R_L2LOSS_SVC_DUAL;
     C = 1;
-    eps = 0.1;
     p = 0.1;
+    nu = 0.5;
+    eps = 0.1;
     nr_weight = 0;
-    weight_label = nullptr;
-    weight = nullptr;
-    init_sol = nullptr;
+    regularize_bias = 1;
+    weight_label = NULL;
+    weight = NULL;
+    init_sol = NULL;
   }
 
   ~parameter() { destroy_param(this); }

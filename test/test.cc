@@ -67,11 +67,11 @@ bool parse_data(const char* path, Callback callback) {
     return make_tuple(any_cast<int>(sv[0]), any_cast<double>(sv[1]));
   };
 
-  p["integer"] = [](const SemanticValues& sv) { return stoi(sv.token()); };
-  p["double"] = [](const SemanticValues& sv) { return stod(sv.token()); };
+  p["integer"] = [](const SemanticValues& sv) { return stoi(sv.token_to_string()); };
+  p["double"] = [](const SemanticValues& sv) { return stod(sv.token_to_string()); };
 
-  mmaplib::MemoryMappedFile mmap(path);
-  return p.parse_n(mmap.data(), mmap.size());
+  mmaplib::mmap mm(path);
+  return p.parse_n(mm.data(), mm.size());
 }
 
 bool prepare_problem(const char* path, linear::problem& prob) {

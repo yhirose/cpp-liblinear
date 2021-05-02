@@ -14,14 +14,14 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 include_directories(
   ..
   ./vendor/liblinear
-  ./vendor/Catch2/single_include
+  ./vendor/Catch2/single_include/catch2
   ./vendor/cpp-peglib
   ./vendor/cpp-mmaplib)
 
 add_executable(
   test-main
   ./vendor/liblinear/linear.cpp
-  ./vendor/liblinear/tron.cpp
+  ./vendor/liblinear/newton.cpp
   ./vendor/liblinear/blas/daxpy.c
   ./vendor/liblinear/blas/ddot.c
   ./vendor/liblinear/blas/dnrm2.c
