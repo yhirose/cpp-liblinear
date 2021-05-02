@@ -124,7 +124,7 @@ TEST_CASE("'heart' dataset test", "[heart]") {
 
   SECTION("cross validation test") {
     auto accuracy = cross_validation_accuracy(prob, param);
-    CHECK(floor(accuracy * 100) == 8407.0);
+    CHECK(floor(accuracy * 100) == 8370.0);
   }
 
   SECTION("predict test") {
@@ -148,7 +148,7 @@ TEST_CASE("'iris' dataset test", "[iris]") {
 
   SECTION("cross validation test") {
     auto accuracy = cross_validation_accuracy(prob, param);
-    CHECK(floor(accuracy * 100) == 9533.0);
+    CHECK(floor(accuracy * 100) == 9466.0);
   }
 
   SECTION("predict test") {
