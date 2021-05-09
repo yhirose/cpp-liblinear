@@ -243,7 +243,7 @@ struct model {
   }
 
 private:
-  inline static void print_null(const char *s) {}
+  inline static void print_null(const char * /*s*/) {}
   C::model *model_;
 };
 
