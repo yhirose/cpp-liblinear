@@ -212,6 +212,12 @@ struct model {
     return C::predict_values(model_, x, dummy.data());
   }
 
+  double predict_values(const C::feature_node *x,
+                       std::vector<double> &dec_values) const {
+    dec_values.resize(model_->nr_class);
+    return C::predict_values(model_, x, dec_values.data());
+  }
+
   double predict_probability(const C::feature_node *x,
                              std::vector<double> &prob_estimates) const {
     prob_estimates.resize(model_->nr_class);
