@@ -76,7 +76,7 @@ bool parse_data(const char* path, Callback callback) {
 
 bool prepare_problem(const char* path, linear::problem& prob) {
   auto ret = parse_data(
-      path, [&](double label, const vector<tuple<int, double>>& features) {
+      path, [&](auto label, const auto& features) {
         prob.begin_entry(label);
         for (const auto& f : features) {
           prob.add_feature(get<0>(f), get<1>(f));  // index, value

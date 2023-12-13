@@ -1,17 +1,16 @@
 //
 //  linear.hpp
 //
-//  Copyright (c) 2018 Yuji Hirose. All rights reserved.
+//  Copyright (c) 2022 Yuji Hirose. All rights reserved.
 //  MIT License
 //
 
-#ifndef _LINEAR_HPP
-#define _LINEAR_HPP
+#pragma once
 
+#include <cassert>
 #include <iostream>
 #include <string>
 #include <vector>
-#include <cassert>
 
 namespace linear {
 
@@ -213,7 +212,7 @@ struct model {
   }
 
   double predict_values(const C::feature_node *x,
-                       std::vector<double> &dec_values) const {
+                        std::vector<double> &dec_values) const {
     dec_values.resize(model_->nr_class);
     return C::predict_values(model_, x, dec_values.data());
   }
@@ -254,5 +253,3 @@ private:
 };
 
 } // namespace linear
-
-#endif // _LINEAR_S_HPP
